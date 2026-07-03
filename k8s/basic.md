@@ -1,40 +1,6 @@
 
 # 15.1.2 Kubernetes — архитектура и компоненты
 
-**См. также:** [15.1 План](15.1%20Plan.md) · предыдущий: [15.1.1 — введение](15.1.1%20Kubernetes%20—%20введение.md) · следующий: [15.1.3 — Minikube](15.1.3%20Kubernetes%20—%20Minikube%20и%20kubectl.md) · Docker CRI: [11.1.3 containerd](../../11.%20Docker/11.1%20Docker%20begin/11.1.3%20Docker%20—%20containerd%2C%20CRI-O%20и%20экосистема.md)
-
-**Тайминг:** ~2 ч
-
----
-
-## Карта занятия
-
-| § | Тема |
-|---|------|
-| 1 | Результаты обучения |
-| 2 | Общая схема кластера |
-| 3 | Control plane: компоненты и взаимодействие |
-| 4 | Worker node: kubelet, kube-proxy, runtime |
-| 5 | CRI, CNI, CSI — три интерфейса |
-| 6 | Объектная модель API |
-| 7 | Обзор сущностей (preview) |
-| 8 | Путь запроса: от kubectl до running Pod |
-| 9 | Minikube vs production cluster |
-
----
-
-## 1. Результаты обучения
-
-После занятия вы должны:
-
-- нарисовать **control plane** и **worker node** и объяснить поток данных;
-- назвать роль **API server**, **etcd**, **scheduler**, **controller-manager**, **kubelet**;
-- понимать разницу **CRI / CNI / CSI**;
-- читать структуру Kubernetes object: `apiVersion`, `kind`, `metadata`, `spec`, `status`;
-- описать цепочку **kubectl apply → Pod Running**.
-
----
-
 ## 2. Общая схема кластера
 
 Кластер Kubernetes делится на:
