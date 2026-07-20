@@ -1,5 +1,5 @@
 
-# 15.1.2 Kubernetes — архитектура и компоненты
+# 15.1.2 Kubernetes - архитектура и компоненты
 
 ## 2. Общая схема кластера
 
@@ -33,7 +33,7 @@ flowchart TB
   proxy --> API
 ```
 
-**Важно:** все компоненты общаются с **API server** (кроме etcd, который только с API server). Нет «прямого» доступа kubectl к kubelet для управления workloads (исключения — debug, metrics).
+**Важно:** все компоненты общаются с **API server** (кроме etcd, который только с API server). Нет «прямого» доступа kubectl к kubelet для управления workloads (исключения - debug, metrics).
 
 ---
 
@@ -45,7 +45,7 @@ flowchart TB
 
 - REST API для всех ресурсов (`/api/v1/pods`, `/apis/apps/v1/deployments`, …).
 - **Authentication** (who) → **Authorization** (RBAC, can?) → **Admission** (mutating/validating webhooks) → запись в etcd.
-- **Watch** — clients (kubectl, controllers, kubelet) подписываются на изменения.
+- **Watch** - clients (kubectl, controllers, kubelet) подписываются на изменения.
 
 ```text
 kubectl apply -f pod.yaml
@@ -57,7 +57,7 @@ kubectl apply -f pod.yaml
 
 ### 3.2. etcd
 
-**Distributed key-value store** — **единственный** source of truth для state кластера.
+**Distributed key-value store** - **единственный** source of truth для state кластера.
 
 | Хранит | Не хранит |
 |--------|-----------|
@@ -65,7 +65,7 @@ kubectl apply -f pod.yaml
 | Cluster config | Application logs (→ stdout/Logging) |
 
 - HA prod: **3 или 5** etcd members на отдельных нодах.
-- Backup etcd — **disaster recovery** (критично для platform team).
+- Backup etcd - **disaster recovery** (критично для platform team).
 - Minikube: один etcd внутри VM.
 
 ### 3.3. kube-scheduler
@@ -87,11 +87,11 @@ Pod created (Pending)
     → kubelet on worker-2 видит Pod и запускает
 ```
 
-Scheduler **не** запускает контейнеры — только **назначает** ноду.
+Scheduler **не** запускает контейнеры - только **назначает** ноду.
 
 ### 3.4. kube-controller-manager
 
-Набор **control loops** (controllers), каждый — reconcile одного типа ресурса:
+Набор **control loops** (controllers), каждый - reconcile одного типа ресурса:
 
 | Controller (пример) | Задача |
 |---------------------|--------|
@@ -108,7 +108,7 @@ Deployment spec.replicas=3, running Pods=2
     → kubelet запускает container
 ```
 
-**Controller manager** и **scheduler** — отдельные процессы; в managed K8s их не видно, но логика та же.
+**Controller manager** и **scheduler** - отдельные процессы; в managed K8s их не видно, но логика та же.
 
 ---
 
@@ -150,7 +150,7 @@ Pod assigned to node-1
 | **containerd** | Docker Engine, Minikube, EKS |
 | **CRI-O** | OpenShift, некоторые distros |
 
-Низкоуровнево — **runc** (OCI), как в Docker chain.
+Низкоуровнево - **runc** (OCI), как в Docker chain.
 
 ---
 
@@ -177,13 +177,13 @@ flowchart TB
 | **CNI** | Как Pod получает IP и маршруты? | Calico, Cilium, Flannel, kindnet |
 | **CSI** | Как примонтировать disk? | EBS CSI, NFS drivers |
 
-**Minikube** поднимает default CNI (often kindnet/calico depending on version) автоматически — в лабе не настраиваем вручную.
+**Minikube** поднимает default CNI (often kindnet/calico depending on version) автоматически - в лабе не настраиваем вручную.
 
 ---
 
 ## 6. Объектная модель API
 
-Каждый ресурс в Kubernetes — **object** с общей структурой:
+Каждый ресурс в Kubernetes - **object** с общей структурой:
 
 ```yaml
 apiVersion: apps/v1      # группа и версия API
@@ -193,14 +193,14 @@ metadata:
   namespace: default
   labels:
     app: nginx
-spec:                    # desired state — ВЫ задаёте
+spec:                    # desired state - ВЫ задаёте
   replicas: 3
   template:
     spec:
       containers:
         - name: nginx
           image: nginx:1.27-alpine
-status:                  # actual state — ЗАПОЛНЯЕТ система
+status:                  # actual state - ЗАПОЛНЯЕТ система
   replicas: 3
   availableReplicas: 3
 ```
@@ -226,7 +226,7 @@ kubectl explain pod.spec.containers
 
 ### 6.2. Labels и selectors
 
-**Labels** — key/value на объектах. **Selectors** связывают объекты:
+**Labels** - key/value на объектах. **Selectors** связывают объекты:
 
 ```text
 Deployment selector: app=nginx
@@ -236,7 +236,7 @@ Deployment selector: app=nginx
 
 ### 6.3. Namespaces
 
-**Namespace** — виртуальная изоляция внутри одного cluster (`default`, `kube-system`, …).
+**Namespace** - виртуальная изоляция внутри одного cluster (`default`, `kube-system`, …).
 
 - RBAC, quotas, DNS names (`service.ns.svc.cluster.local`).
 

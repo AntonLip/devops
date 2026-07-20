@@ -2,7 +2,7 @@
 
 ## 1. Главное правило
 
-Terraform **не требует** имён `main.tf`, `variables.tf` и т.д. В одной папке все файлы `*.tf` **склеиваются** в одну конфигурацию. Имена файлов — **договорённость** для читаемости.
+Terraform **не требует** имён `main.tf`, `variables.tf` и т.д. В одной папке все файлы `*.tf` **склеиваются** в одну конфигурацию. Имена файлов - **договорённость** для читаемости.
 
 ```text
 terraform-getting-started/
@@ -10,22 +10,22 @@ terraform-getting-started/
 ├── provider.tf          # подключение к AWS
 ├── variables.tf         # входные параметры
 ├── outputs.tf           # значения «наружу» после apply
-├── s3.tf                # ресурсы (Step 1) — аналог «main»
+├── s3.tf                # ресурсы (Step 1) - аналог «main»
 ├── security_group.tf    # ресурсы (Step 2)
 ├── ec2.tf               # ресурсы (Step 3)
 ├── terraform.tfvars     # локальные значения (не в Git)
 └── terraform.tfvars.example
 ```
 
-**Root module** — это весь каталог, где вы запускаете `terraform init/plan/apply`.
+**Root module** - это весь каталог, где вы запускаете `terraform init/plan/apply`.
 
 ---
 
-## 2. `versions.tf` — версии и backend
+## 2. `versions.tf` - версии и backend
 
 ### Зачем
 
-- Зафиксировать **минимальную версию Terraform CLI** — чтобы у всех было одинаковое поведение.
+- Зафиксировать **минимальную версию Terraform CLI** - чтобы у всех было одинаковое поведение.
 - Объявить **какие provider-плагины** нужны (`hashicorp/aws`) и **диапазон версий**.
 - блок **`backend`** для remote state в S3.
 
@@ -34,16 +34,16 @@ terraform-getting-started/
 ### Что содержит (построчно)
 
 ```hcl
-# Файл versions.tf — только блок terraform { }.
+# Файл versions.tf - только блок terraform { }.
 # Не смешивайте сюда resource/provider (лучше отдельные файлы).
 
 terraform {
   # Минимальная версия бинарника terraform на вашей машине / в CI.
-  # Если версия ниже — init/plan сразу упадёт с понятной ошибкой.
+  # Если версия ниже - init/plan сразу упадёт с понятной ошибкой.
   required_version = ">= 1.5.0"
 
   required_providers {
-    # Ключ "aws" — локальное имя провайдера в HCL: provider "aws" { }
+    # Ключ "aws" - локальное имя провайдера в HCL: provider "aws" { }
     aws = {
       # Откуда скачивать плагин (реестр HashiCorp).
       source = "hashicorp/aws"
@@ -53,7 +53,7 @@ terraform {
     }
   }
 
-  # backend "s3" { ... }  — в 14.1 не используем; см. 14.2.2
+  # backend "s3" { ... }  - в 14.1 не используем; см. 14.2.2
 }
 ```
 
@@ -73,7 +73,7 @@ terraform {
 
 ---
 
-## 3. `variables.tf` — входные параметры
+## 3. `variables.tf` - входные параметры
 
 ### Зачем
 
@@ -89,20 +89,20 @@ terraform {
 
 ```hcl
 variable "aws_region" {
-  # description — документация; показывается в terraform plan (подсказки).
+  # description - документация; показывается в terraform plan (подсказки).
   description = "AWS region для всех ресурсов lab"
 
-  # type — string, number, bool, list(), map(), object({ ... }).
+  # type - string, number, bool, list(), map(), object({ ... }).
   type = string
 
-  # default — необязательное значение, если не задано в tfvars / -var / TF_VAR_.
+  # default - необязательное значение, если не задано в tfvars / -var / TF_VAR_.
   default = "eu-central-1"
 }
 
 variable "bucket_name" {
   description = "Глобально уникальное имя S3 bucket"
   type        = string
-  # default нет — студент ОБЯЗАН задать в terraform.tfvars (Step 1+).
+  # default нет - студент ОБЯЗАН задать в terraform.tfvars (Step 1+).
 }
 
 variable "ssh_cidr" {
@@ -110,7 +110,7 @@ variable "ssh_cidr" {
   type        = string
   default     = "0.0.0.0/0"
 
-  # validation — проверка до plan; необязательно в 14.1.
+  # validation - проверка до plan; необязательно в 14.1.
   # validation {
   #   condition     = can(cidrhost(var.ssh_cidr, 0))
   #   error_message = "ssh_cidr must be valid CIDR."
@@ -133,7 +133,7 @@ variable "ssh_cidr" {
 | `terraform.tfvars` | **нет** | ваши реальные bucket_name, profile |
 
 ```hcl
-# terraform.tfvars — локально
+# terraform.tfvars - локально
 aws_profile = "default"
 bucket_name = "devops-tf-start-student-123"
 ```
@@ -150,7 +150,7 @@ provider "aws" {
 
 ---
 
-## 4. `provider.tf` — подключение к облаку
+## 4. `provider.tf` - подключение к облаку
 
 ### Зачем
 
@@ -160,34 +160,34 @@ provider "aws" {
 - **какие credentials** (profile или env `AWS_*`);
 - **какие теги** навесить на все поддерживаемые ресурсы (`default_tags`).
 
-Provider — **мост** между Core и AWS API. Сам по себе ресурсы не создаёт.
+Provider - **мост** между Core и AWS API. Сам по себе ресурсы не создаёт.
 
 ### Построчно
 
 ```hcl
-# provider.tf — настройка плагина hashicorp/aws (объявлен в versions.tf).
+# provider.tf - настройка плагина hashicorp/aws (объявлен в versions.tf).
 
 provider "aws" {
-  # region — регион по умолчанию для ресурсов без явного region.
+  # region - регион по умолчанию для ресурсов без явного region.
   region = var.aws_region
 
-  # profile — секция в ~/.aws/credentials + ~/.aws/config.
+  # profile - секция в ~/.aws/credentials + ~/.aws/config.
   # Admin-профиль нужен для создания S3, SG, EC2.
   profile = var.aws_profile
 
-  # default_tags — AWS provider v4+: теги на все create/update ресурсы.
+  # default_tags - AWS provider v4+: теги на все create/update ресурсы.
   # Удобно для cost allocation и поиска lab-ресурсов.
   default_tags {
     tags = {
-      Project = var.project   # меняется на Step 4 — demo update in-place
+      Project = var.project   # меняется на Step 4 - demo update in-place
       Managed = "terraform"
       Lesson  = "14.1"
     }
   }
 }
 
-# data — read-only. Не создаёт ресурс, только читает AWS API.
-# caller identity — account ID, ARN текущего principal (admin profile).
+# data - read-only. Не создаёт ресурс, только читает AWS API.
+# caller identity - account ID, ARN текущего principal (admin profile).
 data "aws_caller_identity" "current" {}
 ```
 
@@ -208,7 +208,7 @@ env AWS_ACCESS_KEY_ID / AWS_PROFILE
 
 ---
 
-## 5. `main.tf` и файлы ресурсов — что создавать в облаке
+## 5. `main.tf` и файлы ресурсов - что создавать в облаке
 
 ### Зачем «main»
 
@@ -225,16 +225,16 @@ env AWS_ACCESS_KEY_ID / AWS_PROFILE
 ### Блок `resource`
 
 ```hcl
-# Тип ресурса в AWS API — логическое имя в Terraform (уникально в модуле).
+# Тип ресурса в AWS API - логическое имя в Terraform (уникально в модуле).
 resource "aws_s3_bucket" "lab" {
-  # bucket — аргумент API; var.bucket_name — из variables.tf / tfvars.
+  # bucket - аргумент API; var.bucket_name - из variables.tf / tfvars.
   bucket = var.bucket_name
 }
 
 # Второй resource ссылается на первый → implicit dependency.
 # Terraform создаст bucket ДО public_access_block.
 resource "aws_s3_bucket_public_access_block" "lab" {
-  bucket = aws_s3_bucket.lab.id   # .id — атрибут после create
+  bucket = aws_s3_bucket.lab.id   # .id - атрибут после create
 
   block_public_acls       = true
   block_public_policy     = true
@@ -274,11 +274,11 @@ locals {
 
 ### Важно про AWS API и ASCII
 
-Строки, уходящие в **AWS API** (`description` SG, некоторые `name`), должны быть **ASCII**. Комментарии `#` и `description` в `variable` могут быть на русском — API их не видит.
+Строки, уходящие в **AWS API** (`description` SG, некоторые `name`), должны быть **ASCII**. Комментарии `#` и `description` в `variable` могут быть на русском - API их не видит.
 
 ```hcl
 # Плохо для SG:
-# description = "Lab 14.1 — SSH"   # символ — (em dash) не ASCII
+# description = "Lab 14.1 - SSH"   # символ - (em dash) не ASCII
 
 # Хорошо:
 description = "Lab 14.1 - SSH for EC2"
@@ -286,7 +286,7 @@ description = "Lab 14.1 - SSH for EC2"
 
 ---
 
-## 6. `outputs.tf` — результат после apply
+## 6. `outputs.tf` - результат после apply
 
 ### Зачем
 
@@ -310,7 +310,7 @@ output "instance_public_ip" {
   value       = aws_instance.lab.public_ip
 }
 
-# sensitive = true — скрывает в консоли; в state всё равно может быть секрет.
+# sensitive = true - скрывает в консоли; в state всё равно может быть секрет.
 # output "secret" {
 #   value     = ...
 #   sensitive = true
@@ -332,33 +332,33 @@ terraform output -raw bucket_id
 |------|-----------|------------------------|------------|
 | `versions.tf` | `terraform { }` | нет | да |
 | `variables.tf` | `variable` | нет | да |
-| `provider.tf` | `provider`, `data` | data — только read | да |
+| `provider.tf` | `provider`, `data` | data - только read | да |
 | `s3.tf`, `ec2.tf`, … | `resource`, `data`, `locals` | да (resource) | да |
 | `outputs.tf` | `output` | нет | да |
 | `terraform.tfvars` | значения variables | нет | **нет** |
-| `terraform.tfstate` | snapshot state | — | **нет** |
-| `.terraform/` | кэш provider | — | **нет** |
+| `terraform.tfstate` | snapshot state | - | **нет** |
+| `.terraform/` | кэш provider | - | **нет** |
 
 ---
 
-## 8. Модули — что это
+## 8. Модули - что это
 
 ### Определение
 
-**Модуль** — переиспользуемый **подпроект** Terraform в отдельной папке:
+**Модуль** - переиспользуемый **подпроект** Terraform в отдельной папке:
 
 - свои `main.tf` / `variables.tf` / `outputs.tf`;
 - вызывается из root через `module "имя" { source = "..." }`.
 
-**Root module** — каталог, где вы запускаете CLI (`terraform-getting-started/`).
+**Root module** - каталог, где вы запускаете CLI (`terraform-getting-started/`).
 
-**Child module** — подпапка, например `modules/network/`.
+**Child module** - подпапка, например `modules/network/`.
 
 | Без модулей | С модулями |
 |-------------|------------|
 | копипаст VPC в каждый проект | один модуль `network`, разные tfvars |
 | длинный root | границы: network / security / app |
-| сложно переиспользовать | один модуль — dev и prod |
+| сложно переиспользовать | один модуль - dev и prod |
 
 
 ### Адрес ресурса в state
@@ -369,7 +369,7 @@ terraform output -raw bucket_id
 
 ---
 
-## 9. Как написать модуль — пошагово
+## 9. Как написать модуль - пошагово
 
 ### Шаг 1. Выделить логический блок
 
@@ -384,7 +384,7 @@ modules/s3-lab/
 └── outputs.tf    # exports модуля
 ```
 
-### Шаг 3. `variables.tf` модуля — только inputs
+### Шаг 3. `variables.tf` модуля - только inputs
 
 ```hcl
 # modules/s3-lab/variables.tf
@@ -400,9 +400,9 @@ variable "block_public_access" {
 }
 ```
 
-Внутри модуля **нет** `var.aws_profile` root — только то, что передали явно.
+Внутри модуля **нет** `var.aws_profile` root - только то, что передали явно.
 
-### Шаг 4. `main.tf` модуля — resources
+### Шаг 4. `main.tf` модуля - resources
 
 ```hcl
 # modules/s3-lab/main.tf
@@ -421,9 +421,9 @@ resource "aws_s3_bucket_public_access_block" "this" {
 }
 ```
 
-Имя ресурса `this` — распространённый convention внутри модуля.
+Имя ресурса `this` - распространённый convention внутри модуля.
 
-### Шаг 5. `outputs.tf` модуля — только наружу
+### Шаг 5. `outputs.tf` модуля - только наружу
 
 ```hcl
 output "bucket_id" {
@@ -436,7 +436,7 @@ output "bucket_arn" {
 }
 ```
 
-Не экспортируйте лишнее — каждый output — контракт модуля.
+Не экспортируйте лишнее - каждый output - контракт модуля.
 
 ### Шаг 6. Вызов из root
 
@@ -502,7 +502,7 @@ module "security" {
 | Переиспользование | один lab | много проектов |
 | Обучение | первый plan/apply | DRY, команда |
 
-Рекомендация: **14.1** — файлы по этапам; **14.2** — вынести network/security в modules.
+Рекомендация: **14.1** - файлы по этапам; **14.2** - вынести network/security в modules.
 
 ---
 
@@ -514,4 +514,4 @@ module "security" {
 - [ ] Знаю, что коммитить lock file, не коммитить tfstate и tfvars
 - [ ] Понимаю implicit dependency через `aws_s3_bucket.lab.id`
 - [ ] Могу описать структуру child module и вызов `module { source = ... }`
-- [ ] Знаю, что SG `description` в AWS — только ASCII
+- [ ] Знаю, что SG `description` в AWS - только ASCII

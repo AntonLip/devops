@@ -1,21 +1,21 @@
 ### Настройка Firewall
 
-**Firewall (Файрвол, Межсетевой экран)** — система контроля сетевого трафика.
+**Firewall (Файрвол, Межсетевой экран)** - система контроля сетевого трафика.
 
 **Типы firewall:**
-- **Сетевой firewall** — на уровне сети
-- **Хостовой firewall** — на уровне отдельного сервера
-- **Прикладной firewall** — на уровне приложений
+- **Сетевой firewall** - на уровне сети
+- **Хостовой firewall** - на уровне отдельного сервера
+- **Прикладной firewall** - на уровне приложений
 
 **В Linux используются:**
-- **iptables** — традиционный firewall
-- **ufw (Uncomplicated Firewall)** — упрощенный интерфейс для iptables
-- **firewalld** — используется в RHEL/CentOS/Fedora
-- **nftables** — современная замена iptables
+- **iptables** - традиционный firewall
+- **ufw (Uncomplicated Firewall)** - упрощенный интерфейс для iptables
+- **firewalld** - используется в RHEL/CentOS/Fedora
+- **nftables** - современная замена iptables
 
 ### UFW (Uncomplicated Firewall)
 
-**UFW** — простой интерфейс для управления iptables.
+**UFW** - простой интерфейс для управления iptables.
 
 **Базовые команды:**
 ```bash

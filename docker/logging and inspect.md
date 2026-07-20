@@ -1,7 +1,7 @@
 
-# Docker — инспекция и логирование
+# Docker - инспекция и логирование
 
-Эксплуатация контейнеров опирается на **наблюдаемость**: что за объект создан, какие у него сеть, тома, переменные окружения, лимиты; что пишет приложение в stdout/stderr; как не переполнить диск логами. Ниже — инструменты Docker CLI и настройки **драйвера логирования** на демоне.
+Эксплуатация контейнеров опирается на **наблюдаемость**: что за объект создан, какие у него сеть, тома, переменные окружения, лимиты; что пишет приложение в stdout/stderr; как не переполнить диск логами. Ниже - инструменты Docker CLI и настройки **драйвера логирования** на демоне.
 
 Документация: [`docker inspect`](https://docs.docker.com/reference/cli/docker/inspect/), [`docker logs`](https://docs.docker.com/reference/cli/docker/container/logs/), [Configure logging drivers](https://docs.docker.com/config/containers/logging/configure/), [JSON-file log options](https://docs.docker.com/config/containers/logging/json-file/).
 
@@ -28,7 +28,7 @@ docker inspect -f '{{json .Mounts}}' mycontainer | jq .
 docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' mycontainer
 ```
 
-Синтаксис шаблонов — как в [Go `text/template`](https://pkg.go.dev/text/template); корень для контейнера — структура с полями `NetworkSettings`, `Config`, `HostConfig` и т.д.
+Синтаксис шаблонов - как в [Go `text/template`](https://pkg.go.dev/text/template); корень для контейнера - структура с полями `NetworkSettings`, `Config`, `HostConfig` и т.д.
 
 ### 1.2. Утилита `jq`
 
@@ -48,7 +48,7 @@ docker inspect mycontainer | jq '.[0].HostConfig.Memory'
 | `docker ps` / `docker ps -a` | Список контейнеров, статус, порты                                                               |
 | `docker stats [контейнеры]`  | CPU, память, сеть, диск I/O в реальном времени                                                  |
 | `docker top контейнер`       | Процессы внутри контейнера (через cgroup/namespace на хосте)                                    |
-| `docker events`              | Поток событий демона (create, start, die, destroy…) — полезно для отладки интеграций и скриптов |
+| `docker events`              | Поток событий демона (create, start, die, destroy…) - полезно для отладки интеграций и скриптов |
 
 Пример **stats** одного контейнера:
 
@@ -112,7 +112,7 @@ docker info --format '{{.Plugins.Log}}'
 
 ## 5. Ротация и лимиты: `json-file` и демон (подробно)
 
-Проблема: при **json-file** каждый контейнер пишет в один или несколько файлов в каталоге данных Docker (часто под `/var/lib/docker/containers/<id>/<id>-json.log`). Без лимитов **быстрый спам в stdout** заполняет корневой раздел — классический инцидент.
+Проблема: при **json-file** каждый контейнер пишет в один или несколько файлов в каталоге данных Docker (часто под `/var/lib/docker/containers/<id>/<id>-json.log`). Без лимитов **быстрый спам в stdout** заполняет корневой раздел - классический инцидент.
 
 ### 5.1. Опции на уровне контейнера (`--log-opt`)
 
@@ -161,11 +161,11 @@ docker rm -f apilog
 
 ### 5.4. Внешняя агрегация
 
-Когда логи уходят в **ELK**, **Loki**, **CloudWatch**, драйвер меняют на соответствующий; ротация на диске хоста становится менее критичной, но появляются **сетевые сбои**, **буферы** и **стоимость** приёма — это уже дизайн платформы.
+Когда логи уходят в **ELK**, **Loki**, **CloudWatch**, драйвер меняют на соответствующий; ротация на диске хоста становится менее критичной, но появляются **сетевые сбои**, **буферы** и **стоимость** приёма - это уже дизайн платформы.
 
 ---
 
-## 6. Практика — inspect и логи
+## 6. Практика - inspect и логи
 
 Запустите контейнер с переменной окружения и томом (упрощённо):
 
@@ -183,6 +183,6 @@ docker run -d --name insp-demo -e DEMO=123 \
 2. Вывести маунты:  
    `docker inspect insp-demo | jq '.[0].Mounts'`
 3. Стрим логов с ограничением:  
-   `docker logs -f --tail 3 insp-demo` (остановить `Ctrl+C` — контейнер не останавливается)
+   `docker logs -f --tail 3 insp-demo` (остановить `Ctrl+C` - контейнер не останавливается)
 4. Остановить и убрать:  
    `docker rm -f insp-demo && docker volume rm insp-demo-vol`
