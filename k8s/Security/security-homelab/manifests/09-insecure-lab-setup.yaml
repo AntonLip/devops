@@ -1,0 +1,111 @@
+# =============================================================================
+# 09-insecure-lab-setup.yaml
+# Урок: 15.3.15 Финальная lab
+# Назначение: намеренно НЕБЕЗОПАСНЫЙ namespace — студент исправляет все ошибки
+# Ошибки внутри:
+#   - cluster-admin для CI SA
+#   - secrets доступны всем authenticated
+#   - nginx:latest + privileged + hostPath /
+#   - plaintext password в Secret
+# НЕ применять в production! Только учебный стенд.
+# Откат: kubectl delete -f 09-insecure-lab-setup.yaml
+#        или ./scripts/cleanup.sh
+# =============================================================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sec-insecure-lab
+
+---
+# SA для «CI» — намеренно с избыточными правами
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: insecure-ci
+  namespace: sec-insecure-lab
+
+---
+# ОШИБКА: cluster-admin для CI/CD — pipeline compromise = весь кластер
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: insecure-ci-admin
+subjects:
+  - kind: ServiceAccount
+    name: insecure-ci
+    namespace: sec-insecure-lab
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+
+---
+# ОШИБКА: пароль в plaintext (base64 в etcd, не encryption by default)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: insecure-db-pass
+  namespace: sec-insecure-lab
+type: Opaque
+stringData:
+  password: supersecret
+
+---
+# Role: чтение secrets в namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: insecure-secret-reader
+  namespace: sec-insecure-lab
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch"]
+
+---
+# ОШИБКА: ВСЕ authenticated users могут читать secrets в namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: insecure-everyone-secrets
+  namespace: sec-insecure-lab
+subjects:
+  - kind: Group
+    name: system:authenticated    # любой залогиненный пользователь
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: insecure-secret-reader
+
+---
+# ОШИБКА: latest + privileged + hostPath / (полный доступ к node FS)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: insecure-app
+  namespace: sec-insecure-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: insecure-app
+  template:
+    metadata:
+      labels:
+        app: insecure-app
+    spec:
+      containers:
+        - name: app
+          image: nginx:latest          # плавающий тег
+          securityContext:
+            privileged: true
+            runAsUser: 0
+          volumeMounts:
+            - name: host
+              mountPath: /host
+      volumes:
+        - name: host
+          hostPath:
+            path: /                    # корень node — критическая уязвимость

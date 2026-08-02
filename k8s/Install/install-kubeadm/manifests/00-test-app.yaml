@@ -1,0 +1,44 @@
+# Тестовое приложение для проверки кластера после kubeadm install
+# Применять после установки CNI (15.5.9+)
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: install-lab
+  labels:
+    app.kubernetes.io/part-of: install-kubeadm-lab
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: install-lab
+  labels:
+    app: web
+    tier: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+        tier: frontend
+    spec:
+      containers:
+        - name: web
+          image: hashicorp/http-echo:1.0
+          args:
+            - -text=Hello from kubeadm lab
+            - -listen=:8080
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi

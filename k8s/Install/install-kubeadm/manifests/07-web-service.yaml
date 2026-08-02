@@ -1,0 +1,37 @@
+# Service ClusterIP + NodePort для проверки kube-proxy (15.5.11)
+# Предусловие: 00-test-app.yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-svc
+  namespace: install-lab
+  labels:
+    app: web
+spec:
+  type: ClusterIP
+  selector:
+    app: web
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-nodeport
+  namespace: install-lab
+  labels:
+    app: web
+spec:
+  type: NodePort
+  selector:
+    app: web
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      nodePort: 30080
+      protocol: TCP

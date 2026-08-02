@@ -1,0 +1,51 @@
+# =============================================================================
+# 00-namespace-sec-lab.yaml
+# Урок: 15.3.2 Authentication, 15.3.5 PSA
+# Назначение: создать namespace для практики Security-курса
+# Применение: kubectl apply -f 00-namespace-sec-lab.yaml
+# Откат:      kubectl delete -f 00-namespace-sec-lab.yaml
+# =============================================================================
+
+# --- sec-lab: основной namespace для RBAC, SA, secure deployments ---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sec-lab
+  labels:
+    # Метка курса — для фильтрации ресурсов
+    app.kubernetes.io/part-of: devops-course
+    # PSA enforce=baseline: запрещает privileged, hostNetwork, hostPID и т.д.
+    # Pod с privileged:true будет ОТКЛОНЁН
+    pod-security.kubernetes.io/enforce: baseline
+    # audit/warn=restricted: нарушения restricted логируются, но не блокируют (пока enforce=baseline)
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+
+---
+# --- sec-psa-privileged: демо «всё разрешено» (как lab-space на стенде) ---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sec-psa-privileged
+  labels:
+    # privileged — минимальные ограничения PSA; insecure pods проходят
+    pod-security.kubernetes.io/enforce: privileged
+
+---
+# --- sec-psa-baseline: средний уровень (типичный production minimum) ---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sec-psa-baseline
+  labels:
+    pod-security.kubernetes.io/enforce: baseline
+
+---
+# --- sec-psa-restricted: максимальная защита workload ---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sec-psa-restricted
+  labels:
+    # restricted: non-root, drop caps, no hostPath, seccomp RuntimeDefault...
+    pod-security.kubernetes.io/enforce: restricted

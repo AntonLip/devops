@@ -1,0 +1,78 @@
+# =============================================================================
+# 07-networkpolicy-allow-frontend-backend.yaml
+# Урок: 15.3.7 NetworkPolicy
+# Предусловие: 06-networkpolicy-default-deny.yaml (sec-netpol + workloads)
+# Назначение: default deny + разрешить только frontend → backend + DNS
+# CNI: Cilium (enable-k8s-networkpolicy: true на homelab)
+# Проверка:
+#   kubectl exec -n sec-netpol deploy/sec-frontend -- wget -qO- http://sec-backend:8080
+#   curl с другого pod — timeout
+# =============================================================================
+
+# --- 1. Default deny: любая NetPol с podSelector:{} включает deny для Ingress/Egress ---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: sec-netpol
+spec:
+  podSelector: {}        # {} = все Pod в namespace
+  policyTypes:
+    - Ingress              # блокируем весь входящий (кроме явных allow)
+    - Egress               # блокируем весь исходящий (кроме явных allow)
+
+---
+# --- 2. Ingress на backend: только от frontend на TCP 8080 ---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-backend
+  namespace: sec-netpol
+spec:
+  podSelector:
+    matchLabels:
+      tier: backend        # политика применяется к backend pods
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              tier: frontend   # источник — только frontend pods в том же ns
+      ports:
+        - protocol: TCP
+          port: 8080
+
+---
+# --- 3. Egress frontend: только к backend + DNS (kube-dns) ---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-egress
+  namespace: sec-netpol
+spec:
+  podSelector:
+    matchLabels:
+      tier: frontend
+  policyTypes:
+    - Egress
+  egress:
+    # Разрешить исходящий к backend
+    - to:
+        - podSelector:
+            matchLabels:
+              tier: backend
+      ports:
+        - protocol: TCP
+          port: 8080
+    # DNS обязателен — иначе не резолвятся Service имена
+    - to:
+        - namespaceSelector: {}    # любой namespace
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns   # CoreDNS pods
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

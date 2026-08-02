@@ -1,0 +1,27 @@
+# =============================================================================
+# 04-insecure-pod-lab-space.yaml
+# Урок: 15.3.4 SecurityContext, 15.3.5 PSA
+# Назначение: тот же insecure Pod, но в lab-space (PSA enforce=privileged)
+# Контраст: здесь Pod СОЗДАСТСЯ (privileged разрешён), в 04-insecure-pod.yaml — deny
+# На стенде: lab-space имеет istio-injection: enabled + PSA privileged
+# Проверка: kubectl apply -f 04-insecure-pod-lab-space.yaml
+#           kubectl get pod -n lab-space sec-insecure-root   # Running
+# =============================================================================
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sec-insecure-root
+  namespace: devops-lab   # реальный namespace на homelab с PSA privileged
+spec:
+  containers:
+    - name: netshoot
+      image: nicolaka/netshoot
+      command: ["sleep", "3600"]
+      resources:
+        requests:
+          cpu: 500m
+          memory: 200Mi
+        limits:
+          cpu: 500m
+          memory: 200Mi

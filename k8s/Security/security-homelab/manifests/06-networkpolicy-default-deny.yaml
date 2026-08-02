@@ -1,0 +1,68 @@
+# =============================================================================
+# 06-networkpolicy-default-deny.yaml
+# Урок: 15.3.7 NetworkPolicy (изолированный lab sec-netpol)
+# Назначение: namespace + frontend/backend для демо netpol БЕЗ devops-lab
+# Применять: kubectl apply -f 06-networkpolicy-default-deny.yaml
+# Затем:     kubectl apply -f 07-networkpolicy-allow-frontend-backend.yaml
+# Альтернатива на стенде: 07-networkpolicy-devops-lab.yaml (реальное приложение)
+# =============================================================================
+
+# Изолированный namespace для учебных netpol (не трогает devops-lab)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sec-netpol
+  labels:
+    course: security-lab
+
+---
+# Frontend — имитирует web-dep (tier=frontend)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sec-frontend
+  namespace: sec-netpol
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sec-frontend
+      tier: frontend      # label для NetworkPolicy selector
+  template:
+    metadata:
+      labels:
+        app: sec-frontend
+        tier: frontend
+    spec:
+      containers:
+        - name: echo
+          image: hashicorp/http-echo:1.0
+          args: ["-text=frontend", "-listen=:8080"]
+          ports:
+            - containerPort: 8080
+
+---
+# Backend — имитирует api-dep (tier=backend)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sec-backend
+  namespace: sec-netpol
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sec-backend
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: sec-backend
+        tier: backend
+    spec:
+      containers:
+        - name: echo
+          image: hashicorp/http-echo:1.0
+          args: ["-text=backend", "-listen=:8080"]
+          ports:
+            - containerPort: 8080

@@ -1,0 +1,23 @@
+# Пример netplan для kubeadm lab VM
+# Скопировать на VM и отредактировать IP + имя интерфейса
+#
+# k8s-cp-01:  192.168.1.20/24
+# k8s-w-01:   192.168.1.21/24
+# k8s-w-02:   192.168.1.22/24
+#
+# Проверка интерфейса: ip link show
+# Применение: sudo cp 99-kubeadm-lab.yaml /etc/netplan/ && sudo netplan apply
+
+network:
+  version: 2
+  ethernets:
+    ens18:
+      addresses:
+        - 192.168.1.20/24
+      routes:
+        - to: default
+          via: 192.168.1.1
+      nameservers:
+        addresses:
+          - 192.168.1.1
+          - 8.8.8.8

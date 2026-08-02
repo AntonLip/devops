@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-lab-static
+  namespace: storage-lab
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: manual
+  resources:
+    requests:
+      storage: 2Gi
+# ---
+# Второй PVC — binding с pv-lab-static-2 (lab multiple PVCs, глава 15.4.4)
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: pvc-lab-static-2
+#   namespace: storage-lab
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   storageClassName: manual
+#   resources:
+#     requests:
+#       storage: 1Gi
+# ---
+# Pending PVC — нет matching PV (демо selector/capacity troubleshooting)
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: pvc-lab-unbound
+#   namespace: storage-lab
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   storageClassName: manual
+#   resources:
+#     requests:
+#       storage: 10Gi

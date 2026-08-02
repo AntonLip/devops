@@ -1,0 +1,92 @@
+# Lab 15.4.2 — Pod с несколькими типами volumes (без PVC)
+# Применять после: kubectl apply -f 00-namespace.yaml
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: multi-vol-config
+  namespace: storage-lab
+  labels:
+    lab: storage-homelab
+data:
+  app.properties: |
+    env=lab
+    log.level=info
+  greeting.txt: "Hello from ConfigMap"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: multi-vol-secret
+  namespace: storage-lab
+  labels:
+    lab: storage-homelab
+type: Opaque
+stringData:
+  api-key: "lab-secret-key-not-for-production"
+  db-password: "changeme"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-multi-volumes
+  namespace: storage-lab
+  labels:
+    app: pod-multi-volumes
+    lab: storage-homelab
+spec:
+  containers:
+    - name: app
+      image: busybox:1.36
+      command: ["sleep", "3600"]
+      volumeMounts:
+        - name: scratch
+          mountPath: /scratch
+        - name: node-data
+          mountPath: /node-data
+        - name: config
+          mountPath: /config
+          readOnly: true
+        - name: secrets
+          mountPath: /secrets
+          readOnly: true
+        - name: projected-all
+          mountPath: /projected
+          readOnly: true
+  volumes:
+    - name: scratch
+      emptyDir:
+        medium: ""
+        sizeLimit: 64Mi
+    - name: node-data
+      hostPath:
+        path: /var/lib/k8s-lab/storage/multi-volumes
+        type: DirectoryOrCreate
+    - name: config
+      configMap:
+        name: multi-vol-config
+    - name: secrets
+      secret:
+        secretName: multi-vol-secret
+    - name: projected-all
+      projected:
+        sources:
+          - configMap:
+              name: multi-vol-config
+              items:
+                - key: greeting.txt
+                  path: greeting.txt
+          - secret:
+              name: multi-vol-secret
+              items:
+                - key: api-key
+                  path: api-key
+          - downwardAPI:
+              items:
+                - path: labels
+                  fieldRef:
+                    fieldPath: metadata.labels
+          - serviceAccountToken:
+              path: token
+              expirationSeconds: 3600
+              audience: storage-lab

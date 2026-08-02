@@ -1,0 +1,47 @@
+# =============================================================================
+# 10-auth-developer-sa.yaml
+# Урок: 15.3.2 Authentication
+# Назначение: ServiceAccount для разных ролей (identity для RBAC в 01, 02, 11)
+# Предусловие: namespace sec-lab (00-namespace-sec-lab.yaml)
+# Проверка:    kubectl create token developer -n sec-lab --duration=1h
+#               kubectl auth whoami --as=system:serviceaccount:sec-lab:developer
+# =============================================================================
+
+# SA для роли Developer — deploy в devops-lab (см. 01-rbac-developer.yaml)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: developer
+  namespace: sec-lab   # SA живёт в sec-lab, права — в devops-lab через RoleBinding
+
+---
+# SA только на чтение (get/list/watch)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: readonly
+  namespace: sec-lab
+
+---
+# SA для DevOps — полный доступ к workload + netpol + secrets в devops-lab
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: devops
+  namespace: sec-lab
+
+---
+# SA для CI/CD — patch deployments, без delete и secrets
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cicd
+  namespace: sec-lab
+
+---
+# SA для мониторинга — cluster-wide read-only (ClusterRoleBinding в 11)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: monitoring
+  namespace: sec-lab

@@ -1,0 +1,63 @@
+# =============================================================================
+# 08-kyverno-disallow-latest.yaml
+# Урок: 15.3.9 Admission Controllers (Kyverno)
+# Предусловие: helm install kyverno kyverno/kyverno -n kyverno --create-namespace
+# Назначение: ClusterPolicy — запрет latest, privileged, hostPath
+# validationFailureAction: Enforce — отклоняет Pod на admission (не только audit)
+# background: true — сканирует существующие ресурсы в фоне
+# Проверка: kubectl run test --image=nginx:latest   # → denied
+# Откат:   kubectl delete -f 08-kyverno-disallow-latest.yaml
+# =============================================================================
+
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-latest-tag
+spec:
+  validationFailureAction: Enforce   # Enforce = блокировать; Audit = только лог
+  background: true                   # проверять уже существующие объекты
+  rules:
+    # --- Правило 1: запрет тега :latest ---
+    - name: require-image-tag-not-latest
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Image tag ':latest' is not allowed"
+        pattern:
+          spec:
+            containers:
+              # !*:latest = любой image, НЕ заканчивающийся на :latest
+              - image: "!*:latest"
+
+    # --- Правило 2: запрет privileged контейнеров ---
+    - name: disallow-privileged
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Privileged containers are not allowed"
+        pattern:
+          spec:
+            containers:
+              - securityContext:
+                  privileged: "false"   # Kyverno pattern: строка "false"
+
+    # --- Правило 3: запрет hostPath volumes ---
+    - name: disallow-hostpath
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "hostPath volumes are not allowed"
+        pattern:
+          spec:
+            # =(volumes) — якорь: если volumes есть, проверять; если нет — OK
+            =(volumes):
+              - X(hostPath): "null"   # hostPath должен отсутствовать

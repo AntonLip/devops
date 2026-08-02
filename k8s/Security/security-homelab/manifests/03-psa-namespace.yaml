@@ -1,0 +1,21 @@
+# =============================================================================
+# 03-psa-namespace.yaml
+# Урок: 15.3.5 Pod Security Admission
+# Назначение: отдельный namespace с enforce=restricted (дублирует 00, но с version)
+# Использование: демо deny insecure pod (04-insecure-pod.yaml)
+# Примечание: sec-psa-restricted уже в 00-namespace-sec-lab.yaml — этот файл legacy/доп.
+# =============================================================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sec-psa-restricted
+  labels:
+    # enforce — блокирует создание Pod, нарушающих restricted
+    pod-security.kubernetes.io/enforce: restricted
+    # версия политики (latest = текущая stable PSA spec)
+    pod-security.kubernetes.io/enforce-version: latest
+    # audit — записывает нарушения в events/metrics без блокировки
+    pod-security.kubernetes.io/audit: restricted
+    # warn — kubectl warning при create с нарушениями
+    pod-security.kubernetes.io/warn: restricted

@@ -1,0 +1,24 @@
+# =============================================================================
+# 04-insecure-pod.yaml
+# Урок: 15.3.4 SecurityContext, 15.3.5 PSA
+# Назначение: намеренно НЕБЕЗОПАСНЫЙ Pod — должен быть ОТКЛОНЁН PSA
+# Namespace: sec-psa-restricted (enforce=restricted)
+# Ожидаемо: FailedCreate — violates PodSecurity "restricted:latest"
+# Проверка: kubectl apply -f 04-insecure-pod.yaml
+#           kubectl get events -n sec-psa-restricted --sort-by='.lastTimestamp'
+# =============================================================================
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sec-insecure-root
+  namespace: sec-psa-restricted
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.27-alpine
+      securityContext:
+        # privileged: полный доступ к node — ЗАПРЕЩЕНО в restricted
+        privileged: true
+        # runAsUser: 0 = root — ЗАПРЕЩЕНО в restricted
+        runAsUser: 0

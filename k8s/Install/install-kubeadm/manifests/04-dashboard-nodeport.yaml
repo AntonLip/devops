@@ -1,0 +1,32 @@
+# Kubernetes Dashboard — NodePort (доступ снаружи без port-forward)
+# ТОЛЬКО для lab! В production Dashboard не публикуйте в LAN без TLS + SSO.
+#
+# Применять ПОСЛЕ 06-install-dashboard.sh:
+#   kubectl apply -f 04-dashboard-nodeport.yaml
+#
+# Открыть в браузере:
+#   https://192.168.1.20:30443   (любая node IP: CP или worker)
+#   Login: Token
+#   kubectl -n kubernetes-dashboard create token dashboard-admin --duration=24h
+#
+# Откат (вернуть ClusterIP):
+#   kubectl patch svc kubernetes-dashboard -n kubernetes-dashboard -p '{"spec":{"type":"ClusterIP"}}'
+#   kubectl delete -f 04-dashboard-nodeport.yaml  # если меняли через apply
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubernetes-dashboard
+  namespace: kubernetes-dashboard
+  labels:
+    k8s-app: kubernetes-dashboard
+spec:
+  type: NodePort
+  selector:
+    k8s-app: kubernetes-dashboard
+  ports:
+    - name: https
+      port: 443
+      targetPort: 8443
+      protocol: TCP
+      nodePort: 30443

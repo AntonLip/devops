@@ -1,0 +1,77 @@
+# =============================================================================
+# 08b-kyverno-require-sc-limits.yaml
+# Урок: 15.3.9 Kyverno
+# Предусловие: Kyverno установлен + 08-kyverno-disallow-latest.yaml
+# Назначение: обязательный SecurityContext и requests/limits на все Pod
+# Внимание: после Enforce старые insecure Pod в devops-lab не пройдут UPDATE
+# =============================================================================
+
+# --- ClusterPolicy 1: SecurityContext hardening ---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-security-context
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    # Pod-level: runAsNonRoot
+    - name: require-pod-security-context
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Pod must define securityContext.runAsNonRoot=true"
+        pattern:
+          spec:
+            securityContext:
+              runAsNonRoot: "true"
+
+    # Container-level: no priv esc, drop ALL caps
+    - name: require-container-security-context
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Container must drop ALL capabilities and disable privilege escalation"
+        pattern:
+          spec:
+            containers:
+              - securityContext:
+                  allowPrivilegeEscalation: "false"
+                  capabilities:
+                    drop:
+                      - ALL
+
+---
+# --- ClusterPolicy 2: Resource requests/limits ---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-requests-limits
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: validate-resources
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "CPU and memory requests/limits are required for every container"
+        pattern:
+          spec:
+            containers:
+              - resources:
+                  requests:
+                    memory: "?*"    # ?* = любое непустое значение
+                    cpu: "?*"
+                  limits:
+                    memory: "?*"
+                    cpu: "?*"

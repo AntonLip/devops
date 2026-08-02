@@ -1,0 +1,148 @@
+# =============================================================================
+# 07-networkpolicy-devops-lab.yaml
+# Урок: 15.3.7 NetworkPolicy (основная практика на РЕАЛЬНОМ стенде)
+# Namespace: devops-lab (web-dep tier=frontend, api-dep tier=backend)
+# Ingress: demo.home → 192.168.1.201 (ingress-nginx)
+# ВАЖНО: разрешаем ingress-nginx и для frontend, и для backend (/api path)
+# Проверка:
+#   curl http://demo.home/          # web-dep
+#   curl http://demo.home/api       # api-dep напрямую через ingress
+#   kubectl exec -n devops-lab deploy/web-dep -- wget -qO- http://api-svc/
+# Откат: kubectl delete -f 07-networkpolicy-devops-lab.yaml
+# =============================================================================
+
+# --- 1. Default deny всех Pod в devops-lab ---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: devops-lab
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+
+---
+# --- 2. Ingress на frontend (web-dep): от ingress-nginx controller ---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-nginx
+  namespace: devops-lab
+spec:
+  podSelector:
+    matchLabels:
+      tier: frontend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              # стандартная метка namespace ingress-nginx на K8s 1.24+
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8080    # containerPort http-echo, не Service port 80
+
+---
+# --- 3. Ingress на backend (api-dep): Ingress path /api идёт НАПРЯМУЮ на api-svc ---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-nginx-api
+  namespace: devops-lab
+spec:
+  podSelector:
+    matchLabels:
+      tier: backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8080
+
+---
+# --- 4. Pod-to-pod: frontend (web) → backend (api) ---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-backend
+  namespace: devops-lab
+spec:
+  podSelector:
+    matchLabels:
+      tier: backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              tier: frontend
+      ports:
+        - protocol: TCP
+          port: 8080
+
+---
+# --- 5. Egress frontend: api-svc + DNS ---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-egress
+  namespace: devops-lab
+spec:
+  podSelector:
+    matchLabels:
+      tier: frontend
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              tier: backend
+      ports:
+        - protocol: TCP
+          port: 8080
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+---
+# --- 6. Egress backend: только DNS (не ходит никуда кроме ответов на ingress) ---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backend-egress-dns
+  namespace: devops-lab
+spec:
+  podSelector:
+    matchLabels:
+      tier: backend
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

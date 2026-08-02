@@ -1,0 +1,43 @@
+# =============================================================================
+# 05-secure-deployment.yaml
+# Урок: 15.3.4 SecurityContext
+# Назначение: эталон БЕЗОПАСНОГО Deployment — проходит PSA restricted
+# Namespace: sec-psa-restricted
+# Проверка: kubectl apply -f 05-secure-deployment.yaml
+#           kubectl get deploy -n sec-psa-restricted sec-secure-echo
+# =============================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sec-secure-echo
+  namespace: sec-psa-restricted
+  labels:
+    app: sec-secure-echo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sec-secure-echo
+  template:
+    metadata:
+      labels:
+        app: sec-secure-echo
+    spec:
+      # Pod-level SecurityContext
+      securityContext:
+        runAsNonRoot: true          # PSA restricted: обязательно
+        runAsUser: 65534            # nobody user
+        seccompProfile:
+          type: RuntimeDefault      # PSA restricted: seccomp профиль
+      containers:
+        - name: echo
+          image: hashicorp/http-echo:1.0   # фиксированный тег, не latest
+          args: ["-text=secure", "-listen=:8080"]
+          ports:
+            - containerPort: 8080
+          securityContext:
+            allowPrivilegeEscalation: false   # запрет su/sudo внутри контейнера
+            readOnlyRootFilesystem: true      # FS только для чтения (нужен emptyDir для tmp)
+            capabilities:
+              drop: ["ALL"]                   # убрать все Linux capabilities

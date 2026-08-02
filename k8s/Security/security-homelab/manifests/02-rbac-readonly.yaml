@@ -1,0 +1,39 @@
+# =============================================================================
+# 02-rbac-readonly.yaml
+# Урок: 15.3.3 RBAC
+# Назначение: роль ReadOnly — только просмотр в devops-lab
+# Проверка:
+#   kubectl auth can-i create pods \
+#     --as=system:serviceaccount:sec-lab:readonly -n devops-lab   # → no
+#   kubectl auth can-i get pods \
+#     --as=system:serviceaccount:sec-lab:readonly -n devops-lab   # → yes
+# =============================================================================
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: readonly
+  namespace: devops-lab
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "configmaps", "events"]
+    verbs: ["get", "list", "watch"]   # только чтение, без create/update/delete
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "watch"]
+  # Нет pods/log — можно добавить в ДЗ для log-reader
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: readonly
+  namespace: devops-lab
+subjects:
+  - kind: ServiceAccount
+    name: readonly
+    namespace: sec-lab
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: readonly

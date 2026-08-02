@@ -1,0 +1,101 @@
+# =============================================================================
+# 11-rbac-devops-cicd-monitoring.yaml
+# Урок: 15.3.3 RBAC
+# Назначение: роли DevOps, CI/CD, Monitoring (дополнение к 01, 02)
+# Предусловие: 10-auth-developer-sa.yaml
+# Проверка:
+#   kubectl auth can-i delete secrets --as=system:serviceaccount:sec-lab:cicd -n devops-lab  # no
+#   kubectl auth can-i get nodes --as=system:serviceaccount:sec-lab:monitoring            # yes
+# =============================================================================
+
+# --- DevOps: полный доступ к workload + netpol + secrets в devops-lab ---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: devops
+  namespace: devops-lab
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "services", "configmaps", "secrets", "events"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses", "networkpolicies"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: devops
+  namespace: devops-lab
+subjects:
+  - kind: ServiceAccount
+    name: devops
+    namespace: sec-lab
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: devops
+
+---
+# --- CI/CD: только deploy (patch), без delete и secrets ---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cicd
+  namespace: devops-lab
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]   # нет delete
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cicd
+  namespace: devops-lab
+subjects:
+  - kind: ServiceAccount
+    name: cicd
+    namespace: sec-lab
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cicd
+
+---
+# --- Monitoring: cluster-wide read-only ---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: monitoring-reader
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "nodes", "services", "endpoints", "namespaces"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
+    verbs: ["get", "list", "watch"]
+  - nonResourceURLs: ["/metrics"]    # доступ к /metrics API (если открыт)
+    verbs: ["get"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: monitoring-reader
+subjects:
+  - kind: ServiceAccount
+    name: monitoring
+    namespace: sec-lab
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: monitoring-reader
